@@ -13,15 +13,10 @@ export default function FeaturedImage({ post }) {
   const defaultWidth = "300";
   const defaultHeight = "200";
 
-  // Affiche les données de post pour le débogage
-  console.log("Données de post :", post);
-  console.log(post.featuredImage);
-  console.log("url" + post.featuredImage.node.mediaDetails.sizes[0].sourceUrl);
-
   // Vérifie si "post" a une image en vedette ("FeaturedImage")
-  if (post.FeaturedImage) {
+  if (post.featuredImage) {
     // Si oui, récupère la première taille de l'image dans les détails multimédias
-    let size = post.FeaturedImage.node.mediaDetails.sizes[0];
+    let size = post.featuredImage.node.mediaDetails.sizes[0];
     img = {
       src: size.sourceUrl,
       width: size.width,
@@ -42,6 +37,7 @@ export default function FeaturedImage({ post }) {
         width={img.width}
         height={img.height}
         alt={post.title}
+        className="h-full object-cover rounded-xl"
       />
     </Link>
   );

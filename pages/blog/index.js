@@ -2,6 +2,7 @@ import FeaturedImage from "@/components/FeaturedImage";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
+import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
 import getAllPosts from "@/lib/posts";
 
@@ -78,6 +79,7 @@ export default function BlogHome({ allPosts }) {
           </ul>
         </section>
       </main>
+      <SiteFooter />
     </>
   );
 }

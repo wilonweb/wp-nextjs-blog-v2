@@ -152,6 +152,8 @@ pour cela on créé `pages\blog\index.js` pour afficher coté front les article 
 
 nous avons mis en place un processus de récupération des données depuis l'API GraphQL de WordPress en utilisant la bibliothèque Next.js. Nous avons également créé des composants personnalisés pour afficher les images en vedette de chaque article, les titres, les extraits et les catégories. Enfin, nous avons ajouté un pied de page simple avec un avis de droits d'auteur.
 
+Creation de `components\SiteFooter.js`
+
 ## BUG
 
 Je n'arrive pas a afficher l'image a la une lié a un article depuis ma query GraphQL
@@ -350,3 +352,6 @@ const nextConfig = {
 
 module.exports = nextConfig;
 ```
+
+// SOLUTION
+L'erreur fenez de FeatureImage qui enfaite est définis comme featuredImage dans lib\posts.js
