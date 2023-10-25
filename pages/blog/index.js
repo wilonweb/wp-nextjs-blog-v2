@@ -39,8 +39,11 @@ export default function BlogHome({ allPosts }) {
             {allPosts.nodes.map((post) => (
               <li key={post.slug} className="grid grid-col-5 gap-4 mb-4">
                 <div className="col-span-2">
-                  <FeaturedImage post={post} />
                   {/* Affiche de l'image à la une de l'article */}
+                  <FeaturedImage post={post} />
+                  {/*console.log(
+                    post.featuredImage.node.mediaDetails.sizes[0].sourceUrl
+                  )*/}
                 </div>
                 <div className="col-span-3">
                   <h2 className="py-4">
