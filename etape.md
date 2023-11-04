@@ -1,4 +1,19 @@
+<style>
+  details {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 10px 0;
+  }
+
+  summary {
+    cursor: pointer;
+  }
+</style>
+
 # NextJS with Wordpres headless
+
+username: nextjs_user
+password: password
 
 <https://www.youtube.com/watch?v=6eVMBX2u_Ug&list=PLpvmpNjU5ooWkh1xAldsikmTxgoo5gc2v>
 Coding reflexions
@@ -25,7 +40,7 @@ Installation de nextJS
 - Installation de TaillwindCSS avec UsingPostCSS
   `npm install -D tailwindcss postcss autoprefixer`
   Puis on lance la commande d'initialisation `npx tailwindcss init`
-  Configuration de `content` dans `/taillwind.config.js` pour la liste de fichier qu'on accepte
+  Configuration de `content` dans `/taillwind.config.js` pour lister les type de fichier qu'on accepte
 
 ```js
 /** @type {import('tailwindcss').Config} */
@@ -65,6 +80,104 @@ Ajout de `\styles\main.css`pour configurer Tailwind CSS pour un fichier CSS et f
 - Le résultat est une page d'accueil accueillante pour un blog de voyage imaginaire, avec un en-tête élégant, un titre accrocheur et un bouton invitant les visiteurs à explorer le blog.
 
 import de `main.css` dans `pages\_app.js`
+
+### SetUp de GraphQL pour WPheadless
+
+WordPress, servira de backend API pour notre frontend Next.js
+configurer un site WordPress sur un serveur VPS cloud, en l'occurrence DigitalOcean ( TODO )
+
+---
+
+Installation du plugin WPGraphQL
+Tester une requete avec postMan
+Puis installation du plugin HeadlessMode et ajouter a `wp-config`
+
+```php
+/* That's all, stop editing! Happy publishing. */
+define( 'HEADLESS_MODE_CLIENT_URL', 'http://nextjstest1.local/wp-login' );
+```
+
+### Fetch Posts from WordPress GraphQL API
+
+nous allons créer la page d'index du blog pour afficher la liste des articles récupérée à partir de l'API WordPress.
+
+Voici le processus
+
+Creation de `lib\graphqlRequest.js` qui contient toute les details de la requette HTTP pour interagir avec un serveur GraphQL
+( Elle gère les en-têtes (headers) et le corps (body) des requêtes )
+
+`lib\posts.js` : Définis une query pour définir ce que la requette doit extraire de l'API graphQL
+
+`next.config.js` : Pour configurer le projet nextJS ( performance, sécurité ... )
+
+- next/image pour effectuer un certain nombre de vérifications pour s'assurer que les images sont sûres et provenant de sources approuvées.
+- remotePatterns vous permet de spécifier les modèles d'URLs d'images distantes qui sont autorisés dans votre application.
+
+`components\FeaturedImage.js` : Pour afficher une image à la une d'un article avec un lien vers le détail de l'article.
+
+pour cela on créé `pages\blog\index.js` pour afficher l'archive des article du backend coté front en les chargrant depuis l'API graphQL
+
+nous avons mis en place un processus de récupération des données depuis l'API GraphQL de WordPress en utilisant la bibliothèque Next.js. Nous avons également créé des composants personnalisés pour afficher les images en vedette de chaque article, les titres, les extraits et les catégories. Enfin, nous avons ajouté un pied de page simple avec un avis de droits d'auteur.
+
+Creation de `components\SiteFooter.js`
+
+### Convertir les chaine de date
+
+On utilise npm Date-fns pour le formatage des dates, dans notre application NextJS
+
+Pour cela on ajoute dans `pages\blog\index.js`
+`<div className="py-4">Published on {post.date}</div>`
+
+installation de `npm install date-fns`
+
+creation de `components\Date.js` pour définir le format de la date
+
+```js
+import { format, parseISO } from "date-fns";
+
+export default function Date({ dateString }) {
+  const date = parseISO(dateString);
+
+  return <time dateTime={dateString}>{format(date, "LLL d, yyyy")}</time>;
+}
+```
+
+Et on apelle le composant dans `pages\blog\index.js`
+
+Ensuite on telecharge le package date-fns et on consulte la documentation [parseIso](https://date-fns.org/v2.30.0/docs/parseISO)
+et [format](https://date-fns.org/v2.30.0/docs/format)pour choisir le format
+
+Pour afficher la date de publication sur une page de blog en utilisant les données provenant de l'API GraphQL de WordPress dans un projet Next.js
+
+extraire la date de publication des articles en utilisant une requête GraphQL. Les dates sont fournies au format ISO standard.
+
+La bibliothèque JavaScript appelée Date-fns permet de manipuler et de formater les dates de différentes manières pour les affiché de manière plus lisible.
+
+création d'un composant de date personnalisé qui prend une date au format ISO en tant que prop pour formater cette date en une forme plus conviviale, par exemple "publié le 21 décembre 2022".
+
+comment intégrer ce composant de date dans la page du blog pour afficher la date de publication de chaque article.
+
+### Creér la single page
+
+Maintenat qu'on a créer la page d'acceuil et la page d'archive qui liste les articles du blog on vas récupérer les données des single pages en utilisant `getStaticProps` et `getStaticPaths`pour générer des pages statiques à partir de données dynamiques
+
+`getStaticProps` est une méthode qui permet de définir les propriétés statiques d'une page. Elle est utilisée pour obtenir des données qui seront précalculées au moment de la génération de la page statique. Ces données sont ensuite injectées en tant que propriétés de la page. Cela permet d'optimiser les performances en évitant de requêter les données à chaque visiteur de la page. Elle est couramment utilisée pour les pages dont le contenu est statique ou qui ne changent pas fréquemment.
+
+`getStaticPaths` est une méthode utilisée pour déterminer les chemins possibles des pages dynamiques. Elle est utilisée en conjonction avec getStaticProps pour générer des pages statiques pour chaque chemin dynamique spécifié. Elle permet à Next.js de savoir quelles pages dynamiques doivent être générées en statique lors de la construction de l'application.
+
+Pour cela on insère notre query dans `lib\posts.js` ou on définis la fonction `getSinglePost` contenant la query dont on a besoin pour afficher le contenue de notre singlePage
+dans `pages\blog\[postSlug].js` qui affiche le contenue coté front.
+
+### Formatter le contenue
+
+Maintenant qu'on a créer la page d'acceuil
+La page d'archive qui liste les articles
+Et la single page qui affiche le contenue d'un article
+On vas mainteant faire de la mise en forme et ajouter quelque éléments comme la date et la derniere modification de l'article.
+
+Pour cela on créer du style dans `styles\main.css` en ajoutant un layer @utilities pour personaliser les classe de maniere selective. comment par exemple les p a l(interieur d'un element HTML avec la clzss post-content.
+
+et on ajouté également un composant Date dans `pages\blog\[postSlug].js`
 
 ## Bug :
 
@@ -113,46 +226,17 @@ Puis j'ai créer `styles\main.css` pour importer toute les couche de taillWind c
 
 Creation du composant `components\SiteHeader.js` pour l'index principal
 
-### Setup de GraphQL API sur Wordpress
+## Vocabulaire
 
-WordPress, servira de backend API pour notre frontend Next.js
-configurer un site WordPress sur un serveur VPS cloud, en l'occurrence DigitalOcean ( TODO )
+`getStaticProps`
+`getStaticPaths`
 
----
+## Question
 
-Installation du plugin WPGraphQL
-Tester une requete avec postMan
+C'est quoi la différence entre Rendered et Raw quand on selectionne des truc dans le QueryComposer
 
-Puis installation du plugin HeadlessMode et ajouter a `wp-config`
-
-```php
-/* That's all, stop editing! Happy publishing. */
-define( 'HEADLESS_MODE_CLIENT_URL', 'http://nextjstest1.local/wp-login' );
-```
-
-### Fetch Posts from WordPress GraphQL API
-
-nous allons créer la page d'index du blog pour afficher la liste des articles récupérée à partir de l'API WordPress.
-
-Voici le processus
-
-Creation de `lib\graphqlRequest.js` qui contient toute les details de la requette HTTP pour interagir avec un serveur GraphQL
-( Elle gère les en-têtes (headers) et le corps (body) des requêtes )
-
-`lib\posts.js` : Définis une query pour définir ce que la requette doit extraire de l'API graphQL
-
-`next.config.js` : Pour configurer le projet nextJS ( performance, sécurité ... )
-
-- next/image pour effectuer un certain nombre de vérifications pour s'assurer que les images sont sûres et provenant de sources approuvées.
-- remotePatterns vous permet de spécifier les modèles d'URLs d'images distantes qui sont autorisés dans votre application.
-
-`components\FeaturedImage.js` : Pour afficher une image à la une d'un article avec un lien vers le détail de l'article.
-
-pour cela on créé `pages\blog\index.js` pour afficher coté front les article chargé depuis l'API graphQL
-
-nous avons mis en place un processus de récupération des données depuis l'API GraphQL de WordPress en utilisant la bibliothèque Next.js. Nous avons également créé des composants personnalisés pour afficher les images en vedette de chaque article, les titres, les extraits et les catégories. Enfin, nous avons ajouté un pied de page simple avec un avis de droits d'auteur.
-
-Creation de `components\SiteFooter.js`
+Dans `lib\posts.js` pourquoi les fonction `getSinglePost` et `getPostSlugs` sont séparé ?
+Peut etre pour réutilisé les slug de l'article sans récupérer toutes les autres données.
 
 ## BUG
 
@@ -160,7 +244,8 @@ Je n'arrive pas a afficher l'image a la une lié a un article depuis ma query Gr
 a la place j'ai l'image par default qui s'affiche
 Pourtant quand je log je récupère bien l'URL de l'image de chaque article
 
-L'image est sensé être affiché par le composant <FeaturedImage> dans mon template de page `pages\blog\index.js`
+L'image est sensé être affiché par le composant <FeaturedImage> dans mon template de page
+`pages\blog\index.js`
 
 ```js
 import FeaturedImage from "@/components/FeaturedImage";
@@ -354,4 +439,8 @@ module.exports = nextConfig;
 ```
 
 // SOLUTION
-L'erreur fenez de FeatureImage qui enfaite est définis comme featuredImage dans lib\posts.js
+C'etait une erreur de case avec FeaturedImage qui enfaite est définis comme featuredImage dans la condition de lib\posts.js
+
+Cependant je rencontre une erreur dans le sens ou la photo par default prend en compte le width a 300px alors que les images associé a l'article sont a 900px.
+
+Savez vous pourquoi ?
