@@ -1,15 +1,3 @@
-<style>
-  details {
-    border: 1px solid #ccc;
-    padding: 10px;
-    margin: 10px 0;
-  }
-
-  summary {
-    cursor: pointer;
-  }
-</style>
-
 # NextJS with Wordpres headless
 
 username: nextjs_user
@@ -22,8 +10,13 @@ Installation de nextJS
 
 `npm run dev` pour lancer le projet
 
+### Update
+
+Note la fonction GetAllPost du début est renommé getPostList
+
 ### Creation des page et dossier de notre projet
 
+- /pages
 - [pageSlug].js
 - contact.js
 - /blog
@@ -83,7 +76,7 @@ import de `main.css` dans `pages\_app.js`
 
 ### SetUp de GraphQL pour WPheadless
 
-WordPress, servira de backend API pour notre frontend Next.js
+WordPress, servira de backend API pour le frontend Next.js
 configurer un site WordPress sur un serveur VPS cloud, en l'occurrence DigitalOcean ( TODO )
 
 ---
@@ -106,7 +99,7 @@ Voici le processus
 Creation de `lib\graphqlRequest.js` qui contient toute les details de la requette HTTP pour interagir avec un serveur GraphQL
 ( Elle gère les en-têtes (headers) et le corps (body) des requêtes )
 
-`lib\posts.js` : Définis une query pour définir ce que la requette doit extraire de l'API graphQL
+`lib\posts.js` : Définis une query pour définir ce que la requette doit extraire de l'API graphQL pour cela on selectionne les élément désiré depuis leplugin GraphQL sur le backend Wordpress
 
 `next.config.js` : Pour configurer le projet nextJS ( performance, sécurité ... )
 
@@ -175,9 +168,555 @@ La page d'archive qui liste les articles
 Et la single page qui affiche le contenue d'un article
 On vas mainteant faire de la mise en forme et ajouter quelque éléments comme la date et la derniere modification de l'article.
 
-Pour cela on créer du style dans `styles\main.css` en ajoutant un layer @utilities pour personaliser les classe de maniere selective. comment par exemple les p a l(interieur d'un element HTML avec la clzss post-content.
+Pour cela on créé du style dans `styles\main.css` en ajoutant un layer @utilities pour personaliser les classe de maniere selective. comment par exemple les p a l'interieur d'un element HTML avec la clzss post-content.
 
 et on ajouté également un composant Date dans `pages\blog\[postSlug].js`
+
+## Creer la page a propos ( static page )
+
+On vas faire la page a propos et la page privacy pour cela
+
+je place dans `pages\[pageSlug].js` les fonction :
+
+- **getStaticPaths** chargée de définir la liste des valeurs possibles pour le paramètre d'URL "page-slug" dans et
+- **getStaticProps** destinée à récupérer les données de la page actuelle en fonction du chemin de l'URL
+
+```js
+export async function getStaticProps({ params }) {
+  const pageData = await getSinglePage(params.pageSlug);
+
+  return {
+    props: {
+      pageData,
+    },
+  };
+}
+
+export async function getStaticPaths() {
+  const pageSlugs = await getPageSlugs();
+
+  return {
+    paths: pageSlugs.map((s) => ({
+      params: {
+        pageSlug: s.slug,
+      },
+    })),
+    fallback: false,
+  };
+}
+```
+
+Puis je créé `lib\page.js` avec une async fonction **getPageSlug** pour y poser la query qui récupérera les slug des page static de notre installation wordpress.
+
+```js
+export async function getPageSlugs() {
+  const query = {
+    query: `query getPageSlugs {
+            pages {
+              nodes {
+                slug
+              }
+            }
+          }`,
+  };
+
+  const resJson = await graphqlRequest(query);
+  const slugs = resJson.data.pages.nodes;
+  return slugs;
+}
+```
+
+Puis j'appelle le await **getPageSlug** dans la fonction **getStaticPaths** presente dans `pages\[pageSlug].js`
+Je retourne chaque slug dans une map ?
+
+Puis je créé `lib\page.js` ou on pose la query en creant la fonction **await getSinglePage**
+Puis j'appelle la fonction **await getSinglePage** dans la fonction **getStaticProps** presente dans `pages\[pageSlug].js`
+
+## Gestionnaire de formulaire ( creation de la page contact )
+
+On créer le formulaire dans `pages\contact.js` et on ajoute le style dans `main/css`
+
+```js
+import Head from "next/head";
+import SiteFooter from "@/components/SiteFooter";
+import SiteHeader from "@/components/SiteHeader";
+
+export default function Contact() {
+  return (
+    <>
+      <Head>
+        <title>Contact us</title>
+      </Head>
+      <section className="bg-slate-700">
+        <SiteHeader className="header-contact"></SiteHeader>
+      </section>
+
+      <section>
+        <div className="container mx-auto lg:max-w-4xl">
+          <h1 className="text-4xl text-center text-sate-700 py8">Contact Us</h1>
+          <form action="" className="contact-form">
+            <label htmlFor="">First Name:</label>
+            <input type="text" id="firstName" name="firstName" />
+            <label htmlFor="">Email:</label>
+            <input type="email" id="email" name="email" />
+            <label htmlFor="message">Message</label>
+            <textarea
+              name="message"
+              id="message"
+              cols="30"
+              rows="10"
+            ></textarea>
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+      </section>
+    </>
+  );
+}
+```
+
+Ensuite on ajoute le gestionnaire d'evenement
+
+```js
+/*
+import Head from "next/head";
+import SiteFooter from "@/components/SiteFooter";
+import SiteHeader from "@/components/SiteHeader";
+*/
+
+const handleSubmit = async (event) => {
+  event.preventDefault();
+  const data = {
+    firstName: event.target.firstName.value,
+    email: event.target.email.value,
+    message: event.target.message.value,
+  };
+  console.log(data);
+};
+/*
+export default function Contact() {
+  return (
+    <>
+      <Head>
+        <title>Contact us</title>
+      </Head>
+      <section className="bg-slate-700">
+        <SiteHeader className="header-contact"></SiteHeader>
+      </section>
+
+      <section>
+        <div className="container mx-auto lg:max-w-4xl">
+          <h1 className="text-4xl text-center text-sate-700 py8">Contact Us</h1>
+          <form action="" className="contact-form" */>onSubmit={handleSubmit}>/*
+            <label htmlFor="">First Name:</label>
+            <input type="text" id="firstName" name="firstName" />
+            <label htmlFor="">Email:</label>
+            <input type="email" id="email" name="email" />
+            <label htmlFor="message">Message</label>
+            <textarea
+              name="message"
+              id="message"
+              cols="30"
+              rows="10"
+            ></textarea>
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+      </section>
+    </>
+  );
+}
+*/
+```
+
+Création du gestionnaire de route `pages\api\form.js` pour traiter la requette liée au formulaire de contact
+
+```js
+export default function handler(req, res) {
+  const body = req.body;
+
+  if (!body.firstName || !body.email || !body.message) {
+    return res
+      .status(400)
+      .json({ data: "first name, email, and message fields are required!" });
+  }
+  return res.status(200).json({ data: "form submitted successfully" });
+}
+```
+
+Création de la requette HTTP coté client dans `pages\contact.js` avec :
+
+Creation du useState pour gerer :
+le statut du formulaire de contact : ( savoir si les champs sont remplis )
+le message de réponse : (le message définis dans le gestionnaire de retoute )
+et la couleur du message d'alerte : ( différente en fonction de la reussite ou de l'echec de la réponse )
+
+```js
+/*
+import Head from "next/head";
+import SiteFooter from "@/components/SiteFooter";
+import SiteHeader from "@/components/SiteHeader";
+import { useState } from "react";
+
+export default function Contact() {*/
+const [submitStatus, setSubmitStatus] = useState(false);
+const [responseMessage, setResponseMessage] = useState("");
+const [alertColor, setAlertColor] = useState("bg-green-500");
+/*
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const data = {
+      firstName: event.target.firstName.value,
+      email: event.target.email.value,
+      message: event.target.message.value,
+    };
+    const jsonData = JSON.stringify(data);
+*/
+const response = await fetch("/api/form", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: jsonData,
+});
+
+const result = await response.json();
+console.log(result.data);
+
+setSubmitStatus(true);
+setResponseMessage(result.data);
+
+if (!response.ok) {
+  setAlertColor("bg-red-500");
+} else {
+  setAlertColor("bg-green-500");
+}
+/*};
+
+  return (
+    <>
+      <Head>
+        <title>Contact us</title>
+      </Head>
+      <section className="bg-slate-700">
+        <SiteHeader className="header-contact"></SiteHeader>
+      </section>
+
+      <section>
+        <div className="container mx-auto lg:max-w-4xl">
+          <h1 className="text-4xl text-center text-sate-700 py8">Contact Us</h1>
+          <form action="" className="contact-form" onSubmit={handleSubmit}>
+            <label htmlFor="">First Name:</label>
+            <input type="text" id="firstName" name="firstName" />
+            <label htmlFor="">Email:</label>
+            <input type="email" id="email" name="email" />
+            <label htmlFor="message">Message</label>
+            <textarea
+              name="message"
+              id="message"
+              cols="30"
+              rows="10"
+            ></textarea>
+            <button type="submit">Submit</button>
+          </form>*/
+{
+  submitStatus ? (
+    <SubmissionAlert message={responseMessage} alertColor={alertColor} />
+  ) : null;
+}
+/*</div>
+      </section>
+    </>
+  );
+}*/
+
+const SubmissionAlert = ({ message, alertColor }) => {
+  return <div className={`${alertColor}`}>{message}</div>;
+};
+```
+
+Couper coller le gestionnaire de formulaire dans le JSX ( pourquoi ) ?
+
+## Implementer le boutton Load More
+
+nous utilisons la pagination basée sur le curseur. C'est un peu différent de la pagination normale et offre plusieurs avantages de performances.
+
+La différence est que la pagination traditionnelle basée sur les pages utilise des requêtes basées sur un décalage (offset) et une limite (limit), tandis que la pagination basée sur le curseur repose sur les informations de la page (page info) fournies par l'API GraphQL.
+
+Ces informations incluent le curseur de fin, le curseur de début, a une page suivante et a une page précédente.
+
+Pour cela dans GraphQL on utilise la query getAllPosts pour voir les propriété
+
+PageInfo {
+endCursor
+hanNextPage
+hasPreviousPage
+startCursor
+}
+
+Ensuite dans la rubrique posts du QueryComposer on a :
+after :
+before :
+first :
+last :
+
+Supposon que nous voulons 5 posts par requete
+
+Je récupere la repondse de la props endCursor apres avoir lancé la Query
+YXJyYXljb25uZWN0aW9uOjQw
+Je met
+first : 5
+Puis je récupère la nouvelle reponse dans la valeur de la propriété endCursor que je cole dans
+after : YXJyYXljb25uZWN0aW9uOjQw
+
+Je relance la query
+puis je re récupère la valeur de endCursor
+pour avoir les post de 6 a 10
+
+Et ainsi de suite jusqu'a que la valeur de hasNextPage soit true
+
+Ensuite on ajoute dans notre Query la condition
+where:
+orderby: field: DATE,
+order: DESC
+
+Puis on ajoute dans `lib\posts.js` une constante qui a notre condition et en ajoutant l'argument endCursor a la fonction getAllPosts ( que l'on a renommé getPostList)
+
+```js
+// Importe la fonction graphqlRequest depuis un module local appelé "graphqlRequest"
+/*
+import graphqlRequest from "./graphqlRequest";
+
+// Query pour obtenir une liste d'article pour le contenue des archives de `pages\blog\index.js`
+export default async function getPostList*/(endCursor = null) /*{*/
+  const condition = `after: "${endCursor}", first: 5, where: {orderby: {field: DATE, order: DESC}}`;
+/*
+  // Définitions de la requette GraphQL
+  const query = {
+    query: `query getAllPosts {
+        posts*/(${condition})/* {
+          nodes {
+            title
+            date
+            slug
+            excerpt(format: RENDERED)
+            featuredImage {
+              node {
+                mediaDetails {
+                  file
+                  sizes {
+                    sourceUrl
+                    width
+                    height
+                  }
+                }
+              }
+            }
+            categories {
+              nodes {
+                name
+                slug
+              }
+            }
+          }
+          pageInfo {
+            endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
+          }
+        }
+      }`,
+  };
+
+  // Lance la Query en tant que requette HTTP grace a graphqlRequest
+  const resJson = await graphqlRequest(query);
+  // Extrait les donnée de la réponse
+  const allPosts = resJson.data.posts;
+
+  // Ajoutez des logs pour afficher les données extraites
+  console.log("Toutes les publications extraites : ", allPosts);
+
+  // Retourner la liste des publications
+  return allPosts;
+}
+
+// Query Pour obtenir les informations des articles affiché dans `pages\blog\[postSlug].js`
+export async function getSinglePost(slug) {
+  // Définitions de la Query
+  const query = {
+    query: `query getSinglePost {
+            post(id: "${slug}", idType: SLUG) {
+              content(format: RENDERED)
+              date
+              excerpt(format: RENDERED)
+              modified
+              slug
+              title(format: RENDERED)
+              featuredImage {
+                node {
+                  mediaDetails {
+                    sizes {
+                      sourceUrl
+                      width
+                      height
+                    }
+                  }
+                }
+              }
+              categories {
+                nodes {
+                  name
+                  slug
+                }
+              }
+            }
+          }`,
+  };
+
+  // Lancement de la query comme requette HTTP et récupération de la réponse
+  const resJson = await graphqlRequest(query);
+  {
+    const singlePost = resJson.data.post;
+    return singlePost;
+  }
+}
+
+//Récupération du slug des slug de chaque publication
+export async function getPostSlugs() {
+  const query = {
+    query: `query getPostSlugs {
+            posts {
+              nodes {
+                slug
+              }
+            }
+          }`,
+  };
+  const resJson = await graphqlRequest(query);
+  const slugs = resJson.data.posts.nodes;
+  return slugs;
+}
+```
+
+Creation de `components\LoadMore.js` pour creer le boutton load more.
+
+Puis implementer un useState dans `pages\blog\index.js`
+Ajouter dans la fonction BlogHome
+`const [posts, setPosts] = useState(allPosts);`
+
+puis renommé `allPosts.nodes.map((post)` en `posts.nodes.map((post)` pkoi ???
+
+Ensuite retourné dans `components\LoadMore.js`
+Passé en argument `{posts, setPost}` dans la **function LoadMore**
+
+Retourner dans l'index pour ajouter les argument a `<LoadMore posts={posts} setPosts={setPosts} />`
+
+Ajouter l'évenement handleOnClick dans `components\LoadMore.js`
+
+Puis on parrametre le **const handleOnClick**
+
+```js
+import { getPostList } from "../lib/posts";
+
+export default function LoadMore({ posts, setPosts }) {
+  const handleOnClick = async (event) => {
+    let clickedBtn = event.target;
+    const morePosts = await getPostList(posts.pageInfo.endCursor);
+    let updatedPosts = {
+      pageInfo: {},
+      nodes: [],
+    };
+
+    updatedPosts.pageInfo = morePosts.pageInfo;
+
+    posts.nodes.map((node) => {
+      updatedPosts.nodes.push(node);
+    });
+
+    morePosts.nodes.map((node) => {
+      updatedPosts.nodes.push(node);
+    });
+
+    setPosts(updatedPosts);
+  };
+  return (
+    <button
+      className="load-more font-bold bg-blue-400 text-slate-900 px-4 py-2 hover:bg-blue-500"
+      onClick={handleOnClick}
+    >
+      Load more posts
+    </button>
+  );
+}
+```
+
+##### To finish 19:42
+
+Le boutton LoadMore charge les pages en boucle c'est pourquoi je vais créer la conditions qui permet de faire en sorte que le boutton n'affiche que load more post
+
+Pour cela on initialise le useState dans `components\LoadMore.js`
+
+- import du useState
+- déclaration de l'état initial du useState avec le texte "LoadMore" et l'etat inactif du boutton regler sur False.
+- Quand le boutton est cliqué Configuration du texte "Loading..." est setDisabled sur True pour le rendre uncliquable
+- Mis a jour de la valeur du boutton apres chargement grace a une conditions déclenché par la promesse de getPostList qui dis si il y a encore des post a chargé.
+
+```js
+/*
+import { getPostList } from "@/lib/posts";*/
+import { useState } from "react";
+/*
+export default function LoadMore({ posts, setPosts }) {
+    */
+const [buttonText, setButtonText] = useState("Load more posts");
+const [buttonDisabled, setButtonDisabled] = useState(false);
+/*
+  const handleOnClick = async (event) => {
+    let clickedBtn = event.target;
+*/
+setButtonText("Loading...");
+setButtonDisabled(true);
+/*
+    const morePosts = await getPostList(posts.pageInfo.endCursor);
+    let updatedPosts = {
+      pageInfo: {},
+      nodes: [],
+    };
+
+    updatedPosts.pageInfo = morePosts.pageInfo;
+
+    posts.nodes.map((node) => {
+      updatedPosts.nodes.push(node);
+    });
+
+    morePosts.nodes.map((node) => {
+      updatedPosts.nodes.push(node);
+    });
+
+    setPosts(updatedPosts);
+*/
+if (morePosts.pageInfo.hasNextPage) {
+  setButtonText("Load more posts");
+  setButtonDisabled(false);
+} else {
+  setButtonText("No more posts to load");
+  setButtonDisabled(true);
+}
+/* };
+  return (
+    <button
+      className="load-more font-bold bg-blue-400 text-slate-900 px-4 py-2 hover:bg-blue-500"
+      onClick={handleOnClick}
+      disabled={buttonDisabled}
+    >*/
+{
+  buttonText;
+}
+/*</button>
+  );
+}*/
+```
 
 ## Bug :
 
@@ -237,6 +776,12 @@ C'est quoi la différence entre Rendered et Raw quand on selectionne des truc da
 
 Dans `lib\posts.js` pourquoi les fonction `getSinglePost` et `getPostSlugs` sont séparé ?
 Peut etre pour réutilisé les slug de l'article sans récupérer toutes les autres données.
+
+Comments les étapes pour définir les routes dynamiques via les fonctions "getStaticPaths" et "getStaticProps" ont été détaillée ?
+
+fonction "getStaticPaths" est chargée de définir la liste des valeurs possibles pour le paramètre d'URL "page-slug"
+
+La fonction "getStaticProps" est destinée à récupérer les données de la page actuelle en fonction du chemin de l'URL
 
 ## BUG
 
