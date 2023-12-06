@@ -11,6 +11,7 @@ export default function Contact() {
 
   // Fonction appelée lors de la soumission du formulaire
   const handleSubmit = async (event) => {
+    // Empêche le comportement par défaut du clic sur le lien
     event.preventDefault();
 
     // Extraction des données du formulaire

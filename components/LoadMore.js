@@ -1,7 +1,7 @@
 import { getPostList } from "@/lib/posts";
 import { useState } from "react";
 
-export default function LoadMore({ posts, setPosts }) {
+export default function LoadMore({ posts, setPosts, taxonomy = null }) {
   // État initial du texte et de la désactivation du bouton
   const [buttonText, setButtonText] = useState("Load more posts");
   const [buttonDisabled, setButtonDisabled] = useState(false);
@@ -17,7 +17,7 @@ export default function LoadMore({ posts, setPosts }) {
     setButtonDisabled(true);
 
     // Récupère plus de posts depuis l'API
-    const morePosts = await getPostList(posts.pageInfo.endCursor);
+    const morePosts = await getPostList(posts.pageInfo.endCursor, taxonomy);
     let updatedPosts = {
       pageInfo: {},
       nodes: [],
@@ -54,9 +54,9 @@ export default function LoadMore({ posts, setPosts }) {
     <button
       className="load-more font-bold bg-blue-400 text-slate-900 px-4 py-2 hover:bg-blue-500"
       onClick={handleOnClick}
-      disabled={buttonDisabled}
+      disabled={posts.pageInfo.hasNextPage ? buttonDisabled : true}
     >
-      {buttonText}
+      {posts.pageInfo.hasNextPage ? buttonText : "No more posts to load"}
     </button>
   );
 }

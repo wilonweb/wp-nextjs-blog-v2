@@ -718,6 +718,131 @@ if (morePosts.pageInfo.hasNextPage) {
 }*/
 ```
 
+### Creation de la page d'archive ( categorie )
+
+on vas dans `pages\category\[categoryName].js`
+et on importe
+
+- FeaturedImage
+- Head
+- Link
+- LoadMore
+- SiteFooter
+- SiteHeader
+
+Ensuite on prepare nos function **getStaticPaths** et **getStaticProps**
+
+Ajout de la fonction **getCategorySlugs** dans `lib\posts.js` pour y placer la query
+
+```js
+export async function getCategorySlugs() {
+  const query = {
+    query: `query getCategorySlugs {
+            categories {
+              nodes {
+                slug
+              }
+            }
+          }`,
+  };
+
+  const resJson = await graphqlRequest(query);
+  const categorie = resJson.data.categories.nodes;
+
+  return categories;
+}
+```
+
+ajout de `taxanomy = null` dans la fonction **getPostList** car la category est une taxonomy de wordpress
+
+ajout de la condition pour filtrer et trier le contenue que l'on veut
+
+```js
+if (taxonomy) {
+  condition = `after: "${endCursor}", first: 5, where: {orderby: {field: DATE, order: DESC}, ${taxonomy.key}: "${taxonomy.value}"}`;
+}
+```
+
+Ensuite je retroune dans `pages\category\[categoryName].js`
+pour remplire mettre le await **getPostList** dans le async **getStaticProps** afin de injecter les categoryPost dans le site Static générer depuis wordpress.
+
+```js
+export async function getStaticProps({ params }) {
+  const categoryPosts = await getPostList(null, {
+    key: "categoryName",
+    value: params.categoryName,
+  });
+
+  return {
+    props: {
+      categoryPosts: categoryPosts,
+    },
+  };
+}
+```
+
+création de la fonction `getCategoriesDetails(categoryName)` pour retourner les details comme le nom et le slug d'une categorie.
+
+Puis on retourne sur `pages\category\[categoryName].js` pour ajouter **const getCategoryDetails** dans la **function getStaticProps**
+
+Faire le JSX du composant
+mentionner le useState`const [posts, setPosts] = useState(categoryPosts);` dans le JSX sans oublié de changer le parametre. Le
+
+On importe le composant Date pour formatter les dates
+
+retourner dans `lib\posts.js` pour modifier la query pour ajouter ` category(id: "${categoryName}", ...`
+On a egalement change le idType de la query en SLUG
+
+```js
+export async function getCategoryDetails(categoryName) {
+  const query = {
+    query: `query getCategoryDetails {
+                category(id: "${categoryName}", idType: SLUG) {
+                  count
+                  name
+                  slug
+                }
+              }`,
+  };
+```
+
+ensuite on ajoute le boutton LoadMore dans le JSX de `pages\category\[categoryName].js`
+
+```js
+<LoadMore
+  posts={posts}
+  setPosts={setPosts}
+  taxonomy={{
+    key: "categoryName",
+    value: categoryDetails.slug,
+  }}
+/>
+```
+
+Ensuite au retourne sur `components\LoadMore.js`
+pour ajouter le parametre `taxonomy` dans la const **morePost** pour ???
+
+`const morePosts = await getPostList(posts.pageInfo.endCursor, taxonomy);`
+
+Cependant si je clique sur le boutton ...
+il faut modifier le state du boutton dans `components\LoadMore.js` en ajoutant des condition sur le boutton
+
+```js
+/* return (
+    <button
+      className="load-more font-bold bg-blue-400 text-slate-900 px-4 py-2 hover:bg-blue-500"
+      onClick={handleOnClick}
+      disabled=*/ {
+  posts.pageInfo.hasNextPage ? buttonDisabled : true;
+}
+//>
+{
+  posts.pageInfo.hasNextPage ? buttonText : "No more posts to load"; /*}
+    </button>
+  );*/
+}
+```
+
 ## Bug :
 
 Je n'arrive pas a afficher un background image appeler avec TaillWind.
@@ -989,3 +1114,28 @@ C'etait une erreur de case avec FeaturedImage qui enfaite est définis comme fea
 Cependant je rencontre une erreur dans le sens ou la photo par default prend en compte le width a 300px alors que les images associé a l'article sont a 900px.
 
 Savez vous pourquoi ?
+
+### Mes articles
+
+#### Creer un formulaire
+
+pour créer un formulaire WP headless nextJS
+
+Création d'un composant stocker dans `/pages`
+avec :
+
+Le formulaire html
+
+Le gestionnaire de formulaire déclenché lors de la soumission du formulaire avec **onSubmit**
+
+- mentionner les donnée a extraire
+- parser en JSON les donnée extraite
+- mentionner la route API apeller avec une requete post dans await pour attendre la réponse
+
+Creation du gestionnaire de requette HTTP dans un fichier a part stocker dans `pages/api`
+pour verifier si il y a une erreur ou si le formulaire est envoyé avec succes.
+
+- Creation du useState pour mettre a jour l'état en fonction de la réponse en prenant en compte
+  - l'etat de la soumission (True / false ) déclenché par la prop par default onSubmit de react
+  - l'etat du message ( stocker dans la reponse de l'api)
+  - l'etat de la couleur de l'alert ( grace a une class CSS )
