@@ -15,7 +15,7 @@ export async function getStaticProps({ params }) {
   const postData = await getSinglePost(params.postSlug);
   // URL de l'image a la une par defaut
   let featuredImageUrl =
-    "http://nextjstest1.local/wp-content/uploads/2022/12/travel_icy-polar_022K.jpg";
+    "http://nextjs-test1.com/wp-content/uploads/2022/12/travel_icy-polar_022K.jpg";
 
   // Vérifie si l'URL de l'image à la une existe dans les données de la publication
   if (postData.featuredImage.node.mediaDetails.sizes[0].sourceUrl) {

@@ -7,7 +7,7 @@ export default function FeaturedImage({ post }) {
 
   // URL de l'image par défaut en cas de manque d'image dans "post"
   const defaultFeaturedImage =
-    "http://nextjstest1.local/wp-content/uploads/2022/12/travel_icy-polar_022K.jpg";
+    "http://nextjs-test1.com/wp-content/uploads/2022/12/travel_icy-polar_022K.jpg";
 
   // Dimensions par défaut pour l'image
   const defaultWidth = "300";

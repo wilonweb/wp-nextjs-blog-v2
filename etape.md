@@ -843,6 +843,61 @@ il faut modifier le state du boutton dans `components\LoadMore.js` en ajoutant d
 }
 ```
 
+### Authentification JWT
+
+On dois ajouter ce code graphQL que l'on telecharge en zip sur github https://github.com/wp-graphql/wp-graphql-jwt-authentication
+
+Récuperer une Auth_KEY dans https://api.wordpress.org/secret-key/1.1/salt/
+
+et ajouter dans `wp-config.php` 'GRAPHQL_JWT_AUTH_SECRET_KEY' suivie de la clé récupéré sur le github
+
+```php
+define('GRAPHQL_JWT_AUTH_SECRET_KEY', 'K?>G)6Sjoov=|,Az5i-%Q.LA1@D@2icap4}/qAb-NxB^9S(3]9Q=(u(Hm?{S5)l:' )
+```
+
+Ensuite on ouvre la Query Composer
+Et on clique sur Add Nex Mutation
+une mutation est une opération qui permet de modifier les données sur le serveur
+
+Pour cela dans le QueryComposer
+Login
+
+- input
+  client = uniqueId
+  password = "passowrd"
+  username = nextjs_user
+  refreshtoken
+
+```php
+mutation LoginMutation {
+ login(input: {password: "password", username: "nextjs_user", clientMutationId: "uniqueId"}) {
+   refreshToken
+ }
+}
+```
+
+ce qui dois retourner les data
+et on copie la valeur de refreshToken
+
+puis on la colle dans le fichier `env.local`pour définir la valeur de
+`WORDPRESS_AUTH_REFRESH_TOKEN=`
+
+Ensuite on ajoute dans `lib\graphqlRequest.js`
+
+```js
+//Permet d'ajouter une authentification a une requette HTTP avec le Refresh_Token en utilisant le schéma "Bearer"
+if (process.env.WORDPRESS_AUTH_REFRESH_TOKEN) {
+  headers[
+    "Authorization"
+  ] = `Bearer ${process.env.WORDPRESS_AUTH_REFRESH_TOKEN}`;
+}
+```
+
+Le code ci dessus est utile quand on clique sur
+GraphQL > Settings > Restrict Endpoint to Authenticated user
+
+### Probleme
+
 ## Bug :
 
 Je n'arrive pas a afficher un background image appeler avec TaillWind.
@@ -1015,7 +1070,7 @@ export default function FeaturedImage({ post }) {
 
   // URL de l'image par défaut en cas de manque d'image dans "post"
   const defaultFeaturedImage =
-    "http://nextjstest1.local/wp-content/uploads/2022/12/travel_icy-polar_022K.jpg";
+    "http://nextjs-test1.com/wp-content/uploads/2022/12/travel_icy-polar_022K.jpg";
 
   // Dimensions par défaut pour l'image
   const defaultWidth = "300";
@@ -1061,7 +1116,7 @@ Ma query est : `lib\graphqlRequest.js`
 ```js
 export default async function graphqlRequest(query) {
   // URL de l'API GraphQL que nous allons interroger
-  const url = "http://nextjstest1.local/graphql";
+  const url = "http://nextjs-test1.com/graphql";
   // En-têtes de la requête HTTP pour spécifier que nous envoyons des données au format JSON.
   const headers = { "Content-Type": "application/json" };
 
