@@ -4,15 +4,19 @@ Affiche un article indiduel coté front
 
 import { getPostSlugs, getSinglePost } from "@/lib/posts";
 
+import CommentForm from "@/components/CommentForm";
 import Date from "@/components/Date";
 import Head from "next/head";
+import Image from "next/image";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
+import { getComments } from "@/lib/comments";
 
 // Fonction pour obtenir les propriétés statiques de la page
 export async function getStaticProps({ params }) {
   // Obtient les données de la publication spécifique en utilisant le slug
   const postData = await getSinglePost(params.postSlug);
+  const { comments, commentCount } = await getComments(params.postSlug);
   // URL de l'image a la une par defaut
   let featuredImageUrl =
     "http://nextjs-test1.com/wp-content/uploads/2022/12/travel_icy-polar_022K.jpg";
@@ -27,6 +31,8 @@ export async function getStaticProps({ params }) {
     props: {
       postData,
       featuredImageUrl: "url(" + featuredImageUrl + ")",
+      comments,
+      commentCount,
     },
   };
 }
@@ -42,12 +48,17 @@ export async function getStaticPaths() {
         postSlug: s.slug,
       },
     })),
-    fallback: false,
+    fallback: "blocking",
   };
 }
 
 // Composant principal de la page de publication unique
-export default function Post({ postData, featuredImageUrl }) {
+export default function Post({
+  postData,
+  featuredImageUrl,
+  comments,
+  commentCount,
+}) {
   return (
     <>
       <Head>
@@ -89,6 +100,58 @@ export default function Post({ postData, featuredImageUrl }) {
           />
         </section>
       </article>
+      <div className="container mx-auto lg:max-w-4xl">
+        <h3 className="text-xl py-2 my-4 border-l-4 border-l-lime-300">
+          {commentCount ? commentCount : "No"}
+        </h3>
+        <CommentForm postId={postData.databaseId} />
+      </div>
+      <div className="container mx-auto lg:max-w-4xl">
+        <section>
+          <ul>
+            {comments.nodes.map((comment) => (
+              <li key={comment.id}>
+                <div className="comment-header flex justify-start items-center">
+                  <div className="py-4">
+                    <Image
+                      src={
+                        comment.author.node.avatar
+                          ? comment.author.node.avatar.url
+                          : "defaultAvatarUrl"
+                      }
+                      width={
+                        comment.author.node.avatar
+                          ? comment.author.node.avatar.width
+                          : "defaultWidth"
+                      }
+                      height={
+                        comment.author.node.avatar
+                          ? comment.author.node.avatar.height
+                          : "defaultHeight"
+                      }
+                      alt=""
+                      className="rounded-full max-w-[50px] mr-4"
+                    />
+                    <div>
+                      <div className="font-bold">{comment.author.name}</div>
+                      <div className="text-sm">
+                        <Date dateString={comment.date} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="comment-body">
+                  <div
+                    dangerouslySetInnerHTML={{ __html: comment.content }}
+                  ></div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+
+      <SiteFooter />
     </>
   );
 }

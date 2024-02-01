@@ -6,8 +6,9 @@
 }
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true, //option qui aide à identifier des problèmes potentiels dans votre application
+  reactStrictMode: true,
   images: {
+    domains: ["1.gravatar.com", "nextjs-test1.com"],
     remotePatterns: [
       {
         protocol: "http",

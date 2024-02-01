@@ -75,14 +75,18 @@ export default function BlogHome({ allPosts }) {
                   {/* affiche les categories de l'article avec un liens*/}
                   <div className="py-4">
                     Posted under {/* affiche post under ou publié sous*/}
-                    {post.categories.nodes.map((category) => (
-                      <Link
-                        href={`/category/${category.slug}`}
-                        key={category.slug}
-                        className="text-blue-400 hover:text-blue-500"
-                      >
-                        {category.name}
-                      </Link>
+                    {post.categories.nodes.map((category, index) => (
+                      <span key={category.slug}>
+                        <Link
+                          href={`/category/${category.slug}`}
+                          key={category.slug}
+                          className="text-blue-400 hover:text-blue-500"
+                        >
+                          {category.name}
+                        </Link>
+                        {/* Affiche une virgule si il y a plus d'une catégorie*/}
+                        {index < post.categories.nodes.length - 1 ? ", " : ""}
+                      </span>
                     ))}
                   </div>
                 </div>
